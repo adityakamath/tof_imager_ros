@@ -1,0 +1,7 @@
+tof_imager:
+    ros__parameters:
+        pointcloud_topic: pointcloud
+        frame_id: base_link
+        mode: 1 # [1 (continuous), 3 (autonomous)]
+        ranging_freq: 15 # limited to 15Hz
+        timer_period: 0.1
