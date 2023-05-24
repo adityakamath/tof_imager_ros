@@ -31,7 +31,7 @@ class ToFImagerPublisher(Node):
         self._timer: Optional[Timer] = None
 
         self.declare_parameter('pointcloud_topic', 'pointcloud')
-        self.declare_parameter('frame_id', 'tof_imager_frame')
+        self.declare_parameter('frame_id', 'tof_frame')
         self.declare_parameter('mode', 1) #1 is continuous, 3 is autonomous
         self.declare_parameter('ranging_freq', 15)
         self.declare_parameter('timer_period', 0.1)
