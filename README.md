@@ -27,6 +27,16 @@ More info about the mode and ranging frequency parameters can be found in the [D
   * SDA to BCM 2
   * SCL to BCM 3
   * GND to any ground pin
+* Enable and update I2C on the Raspberry Pi
+  Note: These steps are only for Ubuntu. For Raspbian, follow the steps [here](https://github.com/pimoroni/vl53l5cx-python)
+  * Enable I2C:
+    ```
+    sudo apt install -y i2c-tools python3-pip
+    sudo pip3 install smbus2
+    ```
+  * Update baud rate by editing the I2C setting in ```/boot/firmware/config.txt``` with the baud rate (1MHz in this case):
+    ```
+    dtparam=i2c_arm=on,i2c_arm_baudrate=1000000
 * Install the vl53l5cx library:
   ```
   $ git clone https://github.com/Abstract-Horizon/vl53l5cx_python
@@ -41,7 +51,8 @@ More info about the mode and ranging frequency parameters can be found in the [D
 This package was tested using a [VL53L5CX ToF Imager](https://www.sparkfun.com/products/18642) from Sparkfun and ROS 2 Humble on two devices:
 * A Raspberry Pi 4 (8GB) running Ubuntu 22.04 with a real-time kernel
 * A Raspberry Pi Zero 2 W running Ubuntu 22.04 without any kernel modifications
-In both cases, and for both modes a max output frequency of ~6.1Hz was achieved. 
+
+With the default I2C baud rate, and for both modes, a max output frequency of ~6.1Hz was achieved. After updating the I2C baud rate, ~15Hz was achieved in the Continuous mode, and ~10Hz was observed in the Autonomous mode with the default timer period. The same results were observed on both devices. 
 
 
 

@@ -35,7 +35,7 @@ def generate_launch_description():
         namespace='', # Do not change, else config params and remappings need to be updated
         output='screen',
         parameters=[tof_imager_params_path],
-        remappings=[('pointcloud', 'tof_pc')])
+        remappings=[('pointcloud', 'tof_pointcloud')])
 
     emit_configure_event = EmitEvent(
         event=ChangeState(
