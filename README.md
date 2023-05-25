@@ -5,7 +5,7 @@ Note: This implementation is a bit over-engineered, as I have been experimenting
 
 ## Implementation details
 
-* ```tof_imager_publisher```: This executable uses the [vl53l5cx_python](https://github.com/Abstract-Horizon/vl53l5cx_python/tree/main) library to access sensor data over I2C. Distance measurements from the sensor are converted to [Pointcloud2](https://docs.ros2.org/foxy/api/sensor_msgs/msg/PointCloud.html) messages which are published periodically using a timer to the ```pointcloud``` topic. The sensor has a resolution of 8x8 as default. While the sensor can also be used with a resolution of 4x4, this package currently does not support it. This implementation is designed as a lifecycle component and can be run individually as well.
+* ```tof_imager_publisher```: This executable uses the [vl53l5cx_python](https://github.com/Abstract-Horizon/vl53l5cx_python/tree/main) library to access sensor data over I2C. Distance measurements from the sensor are converted to [Pointcloud2](https://docs.ros2.org/foxy/api/sensor_msgs/msg/PointCloud.html) messages which are published periodically using a timer to the ```pointcloud``` topic. The sensor has a resolution of 8x8 as default but also provides 4x4 data. This implementation is designed as a lifecycle component and can be run individually as well.
 * ```tof_imager_node```: This executable creates an instance of ```tof_imager_publisher``` and runs it using a single threaded executor. 
 
 * ```tof_imager_launch.py```: This is the launch file that launches ```tof_imager_node``` as a  lifecycle node, loads its parameters, and then configures and activates it. The lifecycle node is first initialized, then set to 'configure' from the launch file. When the 'inactive' state is reached, the registered event handler activates the node.
@@ -14,8 +14,9 @@ Note: This implementation is a bit over-engineered, as I have been experimenting
 
 * ```pointcloud_topic```: Pointcloud2 message topic name (Default: pointcloud)
 * ```frame_id```: Parent frame for the Pointcloud2 message (Default: tof_frame)
+* ```resolution```: 4 for 4x4 OR 8 for 8x8 (Default: 8)
 * ```mode```: 1 for Continuous mode OR 3 for Autonomous mode (Default: 1)
-* ```ranging_freq```: Ranging frequency, limited to 15Hz (Default: 15)
+* ```ranging_freq```: Ranging frequency, limited to 15Hz for 8x8 and 60Hz for 4x4 (Default: 15)
 * ```timer_period```: Timer period in seconds (Default: 0.1)
 
 More info about the mode and ranging frequency parameters can be found in the [Datasheet](https://www.st.com/resource/en/datasheet/vl53l5cx.pdf) and [Guide](https://www.st.com/resource/en/user_manual/um2884-a-guide-to-using-the-vl53l5cx-multizone-timeofflight-ranging-sensor-with-wide-field-of-view-ultra-lite-driver-uld-stmicroelectronics.pdf)
@@ -52,9 +53,14 @@ This package was tested using a [VL53L5CX ToF Imager](https://www.sparkfun.com/p
 * A Raspberry Pi 4 (8GB) running Ubuntu 22.04 with a real-time kernel
 * A Raspberry Pi Zero 2 W running Ubuntu 22.04 without any kernel modifications
 
-With the default I2C baud rate, and for both modes, a max output frequency of ~6.1Hz was achieved. After updating the I2C baud rate, ~15Hz was achieved in the Continuous mode, and ~10Hz was observed in the Autonomous mode with the default timer period. The same results were observed on both devices. 
-
-
-
-
-
+The following results were achieved for both devices:
+* With default I2C baud rates:
+  * Both modes, resolution=8, ranging_freq=15Hz: ~6.1Hz
+* With I2C baud rate=1MHz:
+  * resolution=8, ranging_frequency=15Hz:
+    * Continuous mode, timer_period=0.1: ~15Hz
+    * Autonomous mode, timer_period=0.1: ~10Hz
+    * Autonomous mode, timer_period=0.01: ~15Hz
+  * resolution=4, ranging_frequency=60Hz:
+    * Both modes, timer_period=0.01: ~56.5Hz
+    * Both modes, timer_period=0.025: ~40Hz

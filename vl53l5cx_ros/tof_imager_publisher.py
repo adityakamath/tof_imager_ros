@@ -32,11 +32,12 @@ class ToFImagerPublisher(Node):
 
         self.declare_parameter('pointcloud_topic', 'pointcloud')
         self.declare_parameter('frame_id', 'tof_frame')
+        self.declare_parameter('resolution', 8)
         self.declare_parameter('mode', 1) #1 is continuous, 3 is autonomous
         self.declare_parameter('ranging_freq', 15)
         self.declare_parameter('timer_period', 0.1)
 
-        self._res = 8 
+        self._res = self.get_parameter('resolution').value 
         self._mode = self.get_parameter('mode').value
         self._freq = self.get_parameter('ranging_freq').value
         self._sensor = None
@@ -56,7 +57,7 @@ class ToFImagerPublisher(Node):
             except IndexError:
                 data = VL53L5CXResultsData(nb_target_per_zone=1)
 
-            distance_mm = np.array(data.distance_mm).reshape(self._res,self._res)
+            distance_mm = np.array(data.distance_mm[:(self._res*self._res)]).reshape(self._res,self._res)
             buf = np.empty((self._res, self._res, point_dim), dtype=np.float32)
             it = np.nditer(distance_mm, flags=["multi_index"])
             per_px = np.deg2rad(45) / self._res
@@ -94,8 +95,15 @@ class ToFImagerPublisher(Node):
             self.get_logger().info('Configuration Failure: Invalid sensor mode')
             return TransitionCallbackReturn.FAILURE
 
+        if self._res not in (4, 8):
+            self.get_logger().info('Configuration Failure: Invalid resolution')
+            return TransitionCallbackReturn.FAILURE
+        
         self._sensor.set_resolution(self._res*self._res)
-        self._sensor.set_ranging_frequency_hz(min(self._freq, 15))
+
+        # frequency needs to be set after setting the resolution
+        frequency = min(self._freq, 15) if self._res == 8 else min(self._freq, 60)
+        self._sensor.set_ranging_frequency_hz(frequency)
         self._sensor.set_ranging_mode(self._mode)
         self._sensor.start_ranging()
         
