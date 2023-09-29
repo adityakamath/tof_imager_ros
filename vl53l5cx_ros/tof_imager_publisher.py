@@ -109,9 +109,7 @@ class ToFImagerPublisher(Node):
         
         if self._sensor.is_alive():
             qos_profile = qos_profile_sensor_data
-            self._pc_pub = self.create_lifecycle_publisher(PointCloud2, 
-                                                           self.get_parameter('pointcloud_topic').value, 
-                                                           qos_profile=qos_profile)
+            self._pc_pub = self.create_lifecycle_publisher(PointCloud2, 'pointcloud', qos_profile=qos_profile)
             self._timer = self.create_timer(self.get_parameter('timer_period').value, self.publish_pc)
             
             self.get_logger().info('Configured')
