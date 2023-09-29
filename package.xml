@@ -3,7 +3,7 @@
 <package format="3">
   <name>vl53l5cx_ros</name>
   <version>0.0.0</version>
-  <description>ROS 2 Node for the VL53L5CX ToF Imager</description>
+  <description>ROS 2 package for the VL53L5CX ToF Imager</description>
   <maintainer email="adityakamath@live.com">Aditya Kamath</maintainer>
   <license>Apache License 2.0</license>
     
