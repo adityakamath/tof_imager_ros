@@ -12,7 +12,6 @@ Note: This implementation is a bit over-engineered, as I have been experimenting
 
 ## Parameters
 
-* ```pointcloud_topic```: Pointcloud2 message topic name (Default: pointcloud)
 * ```frame_id```: Parent frame for the Pointcloud2 message (Default: tof_frame)
 * ```resolution```: 4 for 4x4 OR 8 for 8x8 (Default: 8)
 * ```mode```: 1 for Continuous mode OR 3 for Autonomous mode (Default: 1)
