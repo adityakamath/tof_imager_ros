@@ -19,7 +19,7 @@ setup(
     zip_safe=True,
     maintainer='Aditya Kamath',
     maintainer_email='adityakamath@live.com',
-    description='ROS 2 Node for the VL53L5CX ToF Imager',
+    description='ROS 2 package for the VL53L5CX ToF Imager',
     license='Apache License 2.0',
     tests_require=['pytest'],
     entry_points={
