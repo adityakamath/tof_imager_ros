@@ -49,7 +49,7 @@ More info about the mode and ranging frequency parameters can be found in the [D
 ## Results
 
 This package was tested using a [VL53L5CX ToF Imager](https://www.sparkfun.com/products/18642) from Sparkfun and ROS 2 Humble on two devices:
-* A Raspberry Pi 4 (8GB) running Ubuntu 22.04 with a real-time kernel
+* A Raspberry Pi 4 (4GB) running Ubuntu 22.04 with a real-time kernel
 * A Raspberry Pi Zero 2 W running Ubuntu 22.04 without any kernel modifications
 
 The following results were achieved for both devices:
