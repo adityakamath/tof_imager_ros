@@ -28,14 +28,19 @@ class ToFImagerPublisher(Node):
     def __init__(self, node_name='tof_imager'):
         super().__init__(node_name)
         self._pc_pub: Optional[Publisher] = None
-        self._timer: Optional[Timer] = None
-
-        self.declare_parameter('pointcloud_topic', 'pointcloud')
-        self.declare_parameter('frame_id', 'tof_frame')
-        self.declare_parameter('resolution', 8)
-        self.declare_parameter('mode', 1) #1 is continuous, 3 is autonomous
-        self.declare_parameter('ranging_freq', 15)
-        self.declare_parameter('timer_period', 0.1)
+        self._timer: Optional[Timer] = None   
+        
+        # declare parameters and default values
+        self.declare_parameters(
+            namespace='',
+            parameters=[
+                ('frame_id', 'tof_frame'),
+                ('resolution', 8),
+                ('mode', 1), # 1 is continuous, 3 is autonomous
+                ('ranging_freq', 15),
+                ('timer_period', 0.1),  
+            ]
+        )
 
         self._res = self.get_parameter('resolution').value 
         self._mode = self.get_parameter('mode').value
@@ -108,8 +113,7 @@ class ToFImagerPublisher(Node):
         self._sensor.start_ranging()
         
         if self._sensor.is_alive():
-            qos_profile = qos_profile_sensor_data
-            self._pc_pub = self.create_lifecycle_publisher(PointCloud2, 'pointcloud', qos_profile=qos_profile)
+            self._pc_pub = self.create_lifecycle_publisher(PointCloud2, 'pointcloud', qos_profile=qos_profile_sensor_data)
             self._timer = self.create_timer(self.get_parameter('timer_period').value, self.publish_pc)
             
             self.get_logger().info('Configured')
