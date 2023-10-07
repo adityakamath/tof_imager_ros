@@ -8,7 +8,7 @@ Note: This implementation is a bit over-engineered, as I have been experimenting
 * ```tof_imager_publisher```: This executable uses the [vl53l5cx_python](https://github.com/Abstract-Horizon/vl53l5cx_python/tree/main) library to access sensor data (for both sensors) over I2C. Distance measurements from the sensor are converted to [Pointcloud2](https://docs.ros2.org/foxy/api/sensor_msgs/msg/PointCloud.html) messages which are published periodically using a timer to the ```/pointcloud``` topic. The sensor works in 8x8 and 4x4 modes, with the resolution of 8x8 as default. This implementation is designed as a lifecycle component and can be run individually as well.
 * ```tof_imager_node```: This executable creates an instance of ```tof_imager_publisher``` and runs it using a single threaded executor. 
 
-* ```tof_imager_launch.py```: This is the launch file that launches ```tof_imager_node``` as a  lifecycle node, loads its parameters, and then configures and activates it. The lifecycle node is first initialized, then set to 'configure' from the launch file. When the 'inactive' state is reached, the registered event handler activates the node.
+* ```tof_imager_launch.py```: This is the launch file that launches ```tof_imager_node``` as a  lifecycle node, loads its parameters, and then configures and activates it. The lifecycle node is first initialized, and then set to 'configure' from the launch file. When the 'inactive' state is reached, the registered event handler activates the node.
 
 ## Parameters
 
