@@ -22,7 +22,7 @@ from rclpy.executors import ExternalShutdownException
 from rclpy.qos import qos_profile_sensor_data
 from std_msgs.msg import Header
 from sensor_msgs.msg import PointCloud2, PointField
-from vl53l5cx.vl53l5cx import VL53L5CX, VL53L5CXResultsData
+from vl53l5cx.vl53l5cx import VL53L5CX as ToFImager, VL53L5CXResultsData as ToFImagerResults
 
 class ToFImagerPublisher(Node):
     def __init__(self, node_name='tof_imager'):
@@ -60,7 +60,7 @@ class ToFImagerPublisher(Node):
             try:
                 data = self._sensor.get_ranging_data()
             except IndexError:
-                data = VL53L5CXResultsData(nb_target_per_zone=1)
+                data = ToFImagerResults(nb_target_per_zone=1)
 
             distance_mm = np.array(data.distance_mm[:(self._res*self._res)]).reshape(self._res,self._res)
             buf = np.empty((self._res, self._res, point_dim), dtype=np.float32)
@@ -93,7 +93,7 @@ class ToFImagerPublisher(Node):
             self._pc_pub.publish(pc_msg)
 
     def on_configure(self, state: State) -> TransitionCallbackReturn:
-        self._sensor = VL53L5CX()
+        self._sensor = ToFImager()
         self._sensor.init()
 
         if self._mode not in (1, 3):

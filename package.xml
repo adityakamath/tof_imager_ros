@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>vl53l5cx_ros</name>
+  <name>tof_imager_ros</name>
   <version>0.0.0</version>
-  <description>ROS 2 package for the VL53L5CX ToF Imager</description>
+  <description>ROS 2 package for the VL53L5CX and VL53L7CX ToF Imagers</description>
   <maintainer email="adityakamath@live.com">Aditya Kamath</maintainer>
   <license>Apache License 2.0</license>
     

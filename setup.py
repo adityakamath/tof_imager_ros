@@ -2,7 +2,7 @@ import os
 from glob import glob
 from setuptools import setup
 
-package_name = 'vl53l5cx_ros'
+package_name = 'tof_imager_ros'
 
 setup(
     name=package_name,
@@ -19,13 +19,13 @@ setup(
     zip_safe=True,
     maintainer='Aditya Kamath',
     maintainer_email='adityakamath@live.com',
-    description='ROS 2 package for the VL53L5CX ToF Imager',
+    description='ROS 2 package for the VL53L5CX and VL53L7CX ToF Imagers',
     license='Apache License 2.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'tof_imager_publisher = vl53l5cx_ros.tof_imager_publisher:main',
-            'tof_imager_node = vl53l5cx_ros.tof_imager_node:main',
+            'tof_imager_publisher = tof_imager_ros.tof_imager_publisher:main',
+            'tof_imager_node = tof_imager_ros.tof_imager_node:main',
         ],
     },
 )

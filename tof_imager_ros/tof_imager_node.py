@@ -16,7 +16,7 @@ import sys
 import rclpy
 from rclpy.executors import ExternalShutdownException
 from rclpy.executors import SingleThreadedExecutor
-from vl53l5cx_ros.tof_imager_publisher import ToFImagerPublisher
+from tof_imager_ros.tof_imager_publisher import ToFImagerPublisher
 
 def main(args=None):
     rclpy.init(args=args)

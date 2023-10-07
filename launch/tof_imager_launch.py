@@ -26,10 +26,10 @@ def generate_launch_description():
     ld = LaunchDescription()
     
     tof_imager_params_path = PathJoinSubstitution(
-        [FindPackageShare("vl53l5cx_ros"), "config", "sensor_params.yaml"])
+        [FindPackageShare("tof_imager_ros"), "config", "sensor_params.yaml"])
            
     tof_imager_node = LifecycleNode(
-        package='vl53l5cx_ros',
+        package='tof_imager_ros',
         executable='tof_imager_node',
         name='tof_imager',
         namespace='', # Do not change, else config params and remappings need to be updated
