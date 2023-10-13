@@ -1,5 +1,5 @@
 # tof_imager_ros
-ROS 2 package for the [VL53L5CX](https://www.sparkfun.com/products/18642) and [VL53L7CX](https://www.pololu.com/product/3418/resources) ToF (8x8 Array) Imager. 
+ROS 2 package for the [VL53L5CX](https://www.sparkfun.com/products/18642) and [VL53L7CX](https://www.pololu.com/product/3418/resources) ToF (8x8 Array) Imager. The same implementation works for both sensors without any additional configuration.
 
 Note: This implementation is a bit over-engineered, as I have been experimenting with ROS 2 [managed/lifecycle](https://design.ros2.org/articles/node_lifecycle.html) nodes, [executors](https://docs.ros.org/en/humble/Concepts/About-Executors.html#executors) and [composition](https://github.com/ros2/examples/blob/rolling/rclpy/executors/examples_rclpy_executors/composed.py) using Python.
 
