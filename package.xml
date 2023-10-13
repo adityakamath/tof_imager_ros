@@ -6,8 +6,6 @@
   <description>ROS 2 package for the VL53L5CX and VL53L7CX ToF Imagers</description>
   <maintainer email="adityakamath@live.com">Aditya Kamath</maintainer>
   <license>Apache License 2.0</license>
-    
-  <buildtool_depend>ament_python</buildtool_depend>
 
   <depend>rclpy</depend>
   <depend>sensor_msgs</depend>
