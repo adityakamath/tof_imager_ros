@@ -12,11 +12,11 @@ Note: This implementation is a bit over-engineered, as I have been experimenting
 
 ## Parameters
 
-* ```frame_id```: Parent frame for the Pointcloud2 message (Default: tof_frame)
-* ```resolution```: 4 for 4x4 OR 8 for 8x8 (Default: 8)
-* ```mode```: 1 for Continuous mode OR 3 for Autonomous mode (Default: 1)
-* ```ranging_freq```: Ranging frequency, limited to 15Hz for 8x8 and 60Hz for 4x4 (Default: 15)
-* ```timer_period```: Timer period in seconds (Default: 0.1)
+* ```frame_id```: Parent frame for the Pointcloud2 message (Default: ```tof_frame```)
+* ```resolution```: 4 for 4x4 OR 8 for 8x8 (Default: ```8```)
+* ```mode```: 1 for Continuous mode OR 3 for Autonomous mode (Default: ```1```)
+* ```ranging_freq```: Ranging frequency, limited to 15Hz for 8x8 and 60Hz for 4x4 (Default: ```15```)
+* ```timer_period```: Timer period in seconds (Default: ```0.1```)
 
 More info about the mode and ranging frequency parameters can be found in the Datasheets for [VL53L5CX](https://www.st.com/resource/en/datasheet/vl53l5cx.pdf) and [VL53L7CX](https://www.pololu.com/file/0J1992/vl53l7cx.pdf), and Guides for [VL53L5CX](https://www.st.com/resource/en/user_manual/um2884-a-guide-to-using-the-vl53l5cx-multizone-timeofflight-ranging-sensor-with-wide-field-of-view-ultra-lite-driver-uld-stmicroelectronics.pdf) and [VL53L7CX](https://www.pololu.com/file/0J1993/um3038-a-guide-to-using-the-vl53l7cx-timeofflight-multizone-ranging-sensor-with-90-fov-stmicroelectronics.pdf).
 
