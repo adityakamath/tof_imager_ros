@@ -30,7 +30,7 @@ def generate_launch_description():
            
     tof_imager_node = LifecycleNode(
         package='tof_imager_ros',
-        executable='tof_imager_node',
+        executable='tof_imager_publisher',
         name='tof_imager',
         namespace='', # Do not change, else config params and remappings need to be updated
         output='screen',
