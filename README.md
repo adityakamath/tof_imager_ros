@@ -1,14 +1,13 @@
 # tof_imager_ros
 ROS 2 package for the [VL53L5CX](https://www.sparkfun.com/products/18642) and [VL53L7CX](https://www.pololu.com/product/3418/resources) ToF (8x8 Array) Imager. The same implementation works for both sensors without any additional configuration.
 
-Note: This implementation is a bit over-engineered, as I have been experimenting with ROS 2 [managed/lifecycle](https://design.ros2.org/articles/node_lifecycle.html) nodes, [executors](https://docs.ros.org/en/humble/Concepts/About-Executors.html#executors) and [composition](https://github.com/ros2/examples/blob/rolling/rclpy/executors/examples_rclpy_executors/composed.py) using Python.
+Note: This implementation is a bit over-engineered, as I have been experimenting with ROS 2 [managed/lifecycle](https://design.ros2.org/articles/node_lifecycle.html) nodes using Python.
 
 ## Implementation details
 
 * ```tof_imager_publisher```: This executable uses the [vl53l5cx_python](https://github.com/Abstract-Horizon/vl53l5cx_python/tree/main) library to access sensor data (for both sensors) over I2C. Distance measurements from the sensor are converted to [Pointcloud2](https://docs.ros2.org/foxy/api/sensor_msgs/msg/PointCloud.html) messages which are published periodically using a timer to the ```/pointcloud``` topic. The sensor works in 8x8 and 4x4 modes, with the resolution of 8x8 as default. This implementation is designed as a lifecycle component and can be run individually as well.
-* ```tof_imager_node```: This executable creates an instance of ```tof_imager_publisher``` and runs it using a single threaded executor. 
 
-* ```tof_imager_launch.py```: This is the launch file that launches ```tof_imager_node``` as a  lifecycle node, loads its parameters, and then configures and activates it. The lifecycle node is first initialized, and then set to 'configure' from the launch file. When the 'inactive' state is reached, the registered event handler activates the node.
+* ```tof_imager_launch.py```: This is the launch file that launches ```tof_imager_publisher``` as a  lifecycle node, loads its parameters, and then configures and activates it. The lifecycle node is first initialized, and then set to 'configure' from the launch file. When the 'inactive' state is reached, the registered event handler activates the node.
 
 ## Parameters
 
