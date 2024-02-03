@@ -13,9 +13,9 @@
 # limitations under the License.
 
 from launch import LaunchDescription
-from launch.actions import EmitEvent, RegisterEventHandler
+from launch.actions import EmitEvent, RegisterEventHandler, DeclareLaunchArgument
 from launch.events import matches_action
-from launch.substitutions import PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import LifecycleNode
 from launch_ros.event_handlers import OnStateTransition
 from launch_ros.events.lifecycle import ChangeState
@@ -27,15 +27,35 @@ def generate_launch_description():
     
     tof_imager_params_path = PathJoinSubstitution(
         [FindPackageShare("tof_imager_ros"), "config", "sensor_params.yaml"])
+
+    ns_arg = DeclareLaunchArgument(
+        name='ns',
+        default_value='', # Do not change, else config params and remappings need to be updated
+        description='Namespace of the system')
+
+    frame_id_arg = DeclareLaunchArgument(
+        name='frame_id',
+        default_value='tof_imager_frame',
+        description='Frame ID of the ToF Imager')
+
+    config_path_arg = DeclareLaunchArgument(
+        name='config_path',
+        default_value=sensehat_config_path,
+        description='Sense HAT configuration path')
+
+    ld.add_action(ns_arg)
+    ld.add_action(frame_id_arg)
+    ld.add_action(config_path_arg)
            
     tof_imager_node = LifecycleNode(
         package='tof_imager_ros',
         executable='tof_imager_publisher',
         name='tof_imager',
-        namespace='', # Do not change, else config params and remappings need to be updated
+        namespace=LaunchConfiguration('ns'),
         output='screen',
-        parameters=[tof_imager_params_path],
-        remappings=[('pointcloud', 'tof_pointcloud')])
+        parameters=[
+            LaunchConfiguration('config_path'),
+            {'frame_id': LaunchConfiguration('frame_id')}]) # this overwrites the config file param
 
     emit_configure_event = EmitEvent(
         event=ChangeState(
