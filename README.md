@@ -1,6 +1,5 @@
 # tof_imager_ros
 ![](https://img.shields.io/badge/ROS%202%20Humble-Ubuntu%2022.04-blue) ![](https://img.shields.io/badge/ROS%202%20Jazzy-Ubuntu%2024.04-blue) ![GitHub License](https://img.shields.io/github/license/adityakamath/tof_imager_ros)
-[![Website](https://img.shields.io/badge/Website-kamathrobotics.com-blue)](https://kamathrobotics.com)
 [![Ask DeepWiki (Experimental)](https://deepwiki.com/badge.svg)](https://deepwiki.com/adityakamath/tof_imager_ros)
  ![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/kamathsblog)
 
