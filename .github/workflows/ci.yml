@@ -14,17 +14,30 @@ jobs:
       fail-fast: false
       matrix:
         distro: [humble, jazzy, kilted, lyrical]
-    container: ros:${{ matrix.distro }}-ros-base
+    container:
+      image: ros:${{ matrix.distro }}-ros-base
+      # The runner's default resolver failed to look up the Ubuntu mirrors on every job
+      options: --dns 8.8.8.8 --dns 1.1.1.1
     env:
       # Newer pip refuses system-wide installs; older pip ignores this variable
       PIP_BREAK_SYSTEM_PACKAGES: "1"
     steps:
       - name: Install tools
         run: |
-          # Retry transient apt failures (mirror DNS lookups failed on every job once); Error-Mode=any makes a failed fetch fail the update
+          cat /etc/resolv.conf
+          getent hosts archive.ubuntu.com || echo "archive.ubuntu.com does not resolve"
+          # Retry transient apt failures; Error-Mode=any makes a failed fetch fail the update
           echo 'Acquire::Retries "5";' > /etc/apt/apt.conf.d/80-retries
-          for attempt in 1 2 3; do apt-get update -o APT::Update::Error-Mode=any && break; sleep 20; done
-          apt-get install -y --no-install-recommends git build-essential python3-pip python3-dev ros-dev-tools
+          missing=""
+          command -v git >/dev/null || missing="$missing git"
+          command -v pip3 >/dev/null || missing="$missing python3-pip"
+          command -v gcc >/dev/null || missing="$missing build-essential"
+          command -v colcon >/dev/null || missing="$missing ros-dev-tools"
+          [ -f /usr/include/python3*/Python.h ] || [ -f /usr/include/python3.*/Python.h ] || missing="$missing python3-dev"
+          if [ -n "$missing" ]; then
+            for attempt in 1 2 3; do apt-get update -o APT::Update::Error-Mode=any && break; sleep 20; done
+            apt-get install -y --no-install-recommends $missing
+          fi
 
       - uses: actions/checkout@v4
         with:
