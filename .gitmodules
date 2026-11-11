@@ -1,0 +1,3 @@
+[submodule "vl53l5cx_python"]
+	path = vl53l5cx_python
+	url = https://github.com/Abstract-Horizon/vl53l5cx_python

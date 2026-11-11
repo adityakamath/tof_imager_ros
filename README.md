@@ -9,7 +9,7 @@ Note: This implementation is a bit over-engineered, as I have been experimenting
 
 * ```tof_imager_publisher```: This executable uses the [vl53l5cx_python](https://github.com/Abstract-Horizon/vl53l5cx_python/tree/main) library to access sensor data (for both sensors) over I2C. Distance measurements from the sensor are converted to [Pointcloud2](https://docs.ros2.org/foxy/api/sensor_msgs/msg/PointCloud.html) messages which are published periodically using a timer to the ```/pointcloud``` topic. Additionally, the point cloud data can also be streamed via OSC (Open Sound Control) when enabled. The sensor works in 8x8 and 4x4 modes, with the resolution of 8x8 as default. This implementation is designed as a lifecycle component and can be run individually as well.
 
-* ```tof_imager_launch.py```: This is the launch file that launches ```tof_imager_publisher``` as a  lifecycle node, loads its parameters, and then configures the sensor. The lifecycle node is first initialized, and then set to 'configure' from the launch file. The user then needs to activate the lifecycle node from a separate terminal. 
+* ```tof_imager.launch.py```: This is the launch file that launches ```tof_imager_publisher``` as a lifecycle node, loads its parameters, configures the sensor and then activates it once configured, so the point cloud is published without any further steps. The node can also be started alone and driven with ```ros2 lifecycle```.
 
 ## Parameters
 
@@ -51,16 +51,20 @@ Each message contains a flattened array of the corresponding coordinate values f
     ```
     dtparam=i2c_arm=on,i2c_arm_baudrate=1000000
     ```
-* Install the required libraries:
+* Clone this repository, with its submodule, in a ROS 2 workspace (the [vl53l5cx_python](https://github.com/Abstract-Horizon/vl53l5cx_python) library is in ```vl53l5cx_python/```):
   ```
-  $ git clone https://github.com/Abstract-Horizon/vl53l5cx_python
-  $ cd vl53l5cx_python
-  $ sudo python3 setup.py install
-  $ pip3 install python-osc  # For OSC functionality
+  $ git clone --recursive https://github.com/adityakamath/tof_imager_ros
   ```
-* Clone this repository in a ROS 2 workspace. Check the ```sensor_params.yaml``` file in the config directory, and make any necessary changes.
-* Build the package and run the launch file: ```ros2 launch tof_imager_ros tof_imager_launch.py```
-* From a separate terminal, activate the sensor: ```ros2 lifecycle set /tof_imager activate```
+  If already cloned without ```--recursive```: ```git submodule update --init```.
+* Install the required libraries into the Python that ROS uses. ```vl53l5cx_python``` is not a ROS package, so colcon does not build it, and ```python-osc``` is imported even when OSC is disabled:
+  ```
+  $ pip3 install python-osc
+  $ pip3 install ./vl53l5cx_python
+  ```
+  On Ubuntu 24.04 pip refuses system-wide installs; add ```--break-system-packages```, as a virtual environment is not visible to ROS nodes.
+* Check the ```sensor_params.yaml``` file in the config directory, and make any necessary changes. OSC streaming is enabled in the default file, with a specific target IP; set ```osc_enable: false``` or your own ```osc_ip``` before the first run.
+* Build the package and run the launch file: ```ros2 launch tof_imager_ros tof_imager.launch.py```. The launch file configures and activates the node, so ```ros2 lifecycle get /tof_imager``` should report ```active```.
+* If the node exits immediately, the log shows the cause: ```No module named 'vl53l5cx'``` or ```'pythonosc'``` means a library above is missing from the Python ROS uses, and ```Sensor not alive``` points to wiring or I2C.
 
 ## Results
 
