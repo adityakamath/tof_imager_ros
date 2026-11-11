@@ -21,7 +21,9 @@ jobs:
     steps:
       - name: Install tools
         run: |
-          apt-get update
+          # Retry transient apt failures (mirror DNS lookups failed on every job once); Error-Mode=any makes a failed fetch fail the update
+          echo 'Acquire::Retries "5";' > /etc/apt/apt.conf.d/80-retries
+          for attempt in 1 2 3; do apt-get update -o APT::Update::Error-Mode=any && break; sleep 20; done
           apt-get install -y --no-install-recommends git build-essential python3-pip python3-dev ros-dev-tools
 
       - uses: actions/checkout@v4
