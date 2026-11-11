@@ -82,8 +82,10 @@ class ToFImagerPublisher(Node):
         for e in it:
             w, h = it.multi_index
             e = 0 if e < 0 else e
-            x = e*np.cos(w*per_px - np.deg2rad(45)/2 - np.deg2rad(90))/1000
-            y = e*np.sin(h*per_px - np.deg2rad(45)/2)/1000
+            # Zone centres across the 45 degree FOV. Pixel rows run toward the sensor's left, so x is negated to
+            # give a right-handed frame with z along the boresight (x right, y forward when facing up)
+            x = -e*np.sin((w + 0.5)*per_px - np.deg2rad(45)/2)/1000
+            y = e*np.sin((h + 0.5)*per_px - np.deg2rad(45)/2)/1000
             z = e/1000
             buf[w][h] = [x, y, z]
         
