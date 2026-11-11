@@ -13,7 +13,7 @@ Note: This implementation is a bit over-engineered, as I have been experimenting
 
 ## Parameters
 
-* ```frame_id```: Parent frame for the Pointcloud2 message (Default: ```tof_frame```)
+* ```frame_id```: Parent frame for the Pointcloud2 message (Default: ```tof_frame```). Points are zone centres across the 45° field of view with ```z``` along the sensor's boresight and ```(x, y, z)``` right-handed (the sensor's row order is mirrored into ```x```); orient the frame in the robot's URDF so that ```x``` and ```y``` follow how the sensor is mounted
 * ```resolution```: 4 for 4x4 OR 8 for 8x8 (Default: ```8```)
 * ```mode```: 1 for Continuous mode OR 3 for Autonomous mode (Default: ```1```)
 * ```ranging_freq```: Ranging frequency, limited to 15Hz for 8x8 and 60Hz for 4x4 (Default: ```15```)
