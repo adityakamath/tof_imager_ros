@@ -18,6 +18,10 @@ jobs:
       image: ros:${{ matrix.distro }}-ros-base
       # The runner's default resolver failed to look up the Ubuntu mirrors on every job
       options: --dns 8.8.8.8 --dns 1.1.1.1
+    defaults:
+      run:
+        # The ROS setup scripts are bash; container steps default to sh
+        shell: bash
     env:
       # Newer pip refuses system-wide installs; older pip ignores this variable
       PIP_BREAK_SYSTEM_PACKAGES: "1"
