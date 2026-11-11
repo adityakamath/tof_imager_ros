@@ -5,6 +5,3 @@ tof_imager:
         mode: 1 # [1 (continuous), 3 (autonomous)]
         ranging_freq: 15 # limited to 15Hz if resolution is 8x8, else 60Hz
         timer_period: 0.1
-        osc_enable: true  # Set to false to disable OSC
-        osc_ip: "100.100.96.12"  # Your target IP
-        osc_port: 8000  # Your target port

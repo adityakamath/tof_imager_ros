@@ -7,7 +7,7 @@ Note: This implementation is a bit over-engineered, as I have been experimenting
 
 ## Implementation details
 
-* ```tof_imager_publisher```: This executable uses the [vl53l5cx_python](https://github.com/Abstract-Horizon/vl53l5cx_python/tree/main) library to access sensor data (for both sensors) over I2C. Distance measurements from the sensor are converted to [Pointcloud2](https://docs.ros2.org/foxy/api/sensor_msgs/msg/PointCloud.html) messages which are published periodically using a timer to the ```/pointcloud``` topic. Additionally, the point cloud data can also be streamed via OSC (Open Sound Control) when enabled. The sensor works in 8x8 and 4x4 modes, with the resolution of 8x8 as default. This implementation is designed as a lifecycle component and can be run individually as well.
+* ```tof_imager_publisher```: This executable uses the [vl53l5cx_python](https://github.com/Abstract-Horizon/vl53l5cx_python/tree/main) library to access sensor data (for both sensors) over I2C. Distance measurements from the sensor are converted to [Pointcloud2](https://docs.ros2.org/foxy/api/sensor_msgs/msg/PointCloud.html) messages which are published periodically using a timer to the ```/pointcloud``` topic. The sensor works in 8x8 and 4x4 modes, with the resolution of 8x8 as default. This implementation is designed as a lifecycle component and can be run individually as well.
 
 * ```tof_imager.launch.py```: This is the launch file that launches ```tof_imager_publisher``` as a lifecycle node, loads its parameters, configures the sensor and then activates it once configured, so the point cloud is published without any further steps. The node can also be started alone and driven with ```ros2 lifecycle```.
 
@@ -18,20 +18,8 @@ Note: This implementation is a bit over-engineered, as I have been experimenting
 * ```mode```: 1 for Continuous mode OR 3 for Autonomous mode (Default: ```1```)
 * ```ranging_freq```: Ranging frequency, limited to 15Hz for 8x8 and 60Hz for 4x4 (Default: ```15```)
 * ```timer_period```: Timer period in seconds (Default: ```0.1```)
-* ```osc_enable```: Enable/disable OSC streaming (Default: ```false```)
-* ```osc_ip```: Target IP address for OSC messages (Default: ```127.0.0.1```)
-* ```osc_port```: Target port for OSC messages (Default: ```8000```)
 
 More info about the mode and ranging frequency parameters can be found in the Datasheets for [VL53L5CX](https://www.st.com/resource/en/datasheet/vl53l5cx.pdf) and [VL53L7CX](https://www.pololu.com/file/0J1992/vl53l7cx.pdf), and Guides for [VL53L5CX](https://www.st.com/resource/en/user_manual/um2884-a-guide-to-using-the-vl53l5cx-multizone-timeofflight-ranging-sensor-with-wide-field-of-view-ultra-lite-driver-uld-stmicroelectronics.pdf) and [VL53L7CX](https://www.pololu.com/file/0J1993/um3038-a-guide-to-using-the-vl53l7cx-timeofflight-multizone-ranging-sensor-with-90-fov-stmicroelectronics.pdf).
-
-## OSC Output
-
-When OSC is enabled, the node streams point cloud coordinates using the following OSC messages:
-* ```/tx```: Array of x coordinates
-* ```/ty```: Array of y coordinates
-* ```/tz```: Array of z coordinates
-
-Each message contains a flattened array of the corresponding coordinate values from the point cloud.
 
 ## How to use
 
@@ -56,15 +44,14 @@ Each message contains a flattened array of the corresponding coordinate values f
   $ git clone --recursive https://github.com/adityakamath/tof_imager_ros
   ```
   If already cloned without ```--recursive```: ```git submodule update --init```.
-* Install the required libraries into the Python that ROS uses. ```vl53l5cx_python``` is not a ROS package, so colcon does not build it, and ```python-osc``` is imported even when OSC is disabled:
+* Install the required libraries into the Python that ROS uses. ```vl53l5cx_python``` is not a ROS package, so colcon does not build it:
   ```
-  $ pip3 install python-osc
   $ pip3 install ./vl53l5cx_python
   ```
   On Ubuntu 24.04 pip refuses system-wide installs; add ```--break-system-packages```, as a virtual environment is not visible to ROS nodes.
-* Check the ```sensor_params.yaml``` file in the config directory, and make any necessary changes. OSC streaming is enabled in the default file, with a specific target IP; set ```osc_enable: false``` or your own ```osc_ip``` before the first run.
+* Check the ```sensor_params.yaml``` file in the config directory, and make any necessary changes.
 * Build the package and run the launch file: ```ros2 launch tof_imager_ros tof_imager.launch.py```. The launch file configures and activates the node, so ```ros2 lifecycle get /tof_imager``` should report ```active```.
-* If the node exits immediately, the log shows the cause: ```No module named 'vl53l5cx'``` or ```'pythonosc'``` means a library above is missing from the Python ROS uses, and ```Sensor not alive``` points to wiring or I2C.
+* If the node exits immediately, the log shows the cause: ```No module named 'vl53l5cx'``` means the library above is missing from the Python ROS uses, and ```Sensor not alive``` points to wiring or I2C.
 
 ## Results
 
