@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.distro }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        distro: [humble, jazzy, kilted, lyrical]
+    container: ros:${{ matrix.distro }}-ros-base
+    env:
+      # Newer pip refuses system-wide installs; older pip ignores this variable
+      PIP_BREAK_SYSTEM_PACKAGES: "1"
+    steps:
+      - name: Install tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends git build-essential python3-pip python3-dev ros-dev-tools
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          rosdep update --rosdistro ${{ matrix.distro }}
+          rosdep install --from-paths . --ignore-src -y -r --rosdistro ${{ matrix.distro }}
+          pip3 install ./vl53l5cx_python
+
+      - name: Build
+        run: |
+          . /opt/ros/${{ matrix.distro }}/setup.bash
+          colcon build --event-handlers console_direct+
+
+      # The sensor itself needs hardware, so check what a runner can: the node imports against this distro's
+      # rclpy and the launch file builds its description.
+      - name: Smoke test
+        run: |
+          . /opt/ros/${{ matrix.distro }}/setup.bash
+          . install/setup.bash
+          python3 -c "import tof_imager_ros.tof_imager_publisher"
+          python3 -c "
+          import importlib.util
+          spec = importlib.util.spec_from_file_location('tof_imager_launch', 'launch/tof_imager.launch.py')
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          module.generate_launch_description()"
