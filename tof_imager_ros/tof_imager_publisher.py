@@ -45,9 +45,24 @@ class ToFImagerPublisher(Node):
         self.res = self.get_parameter('resolution').value 
         self.mode = self.get_parameter('mode').value
         self.freq = self.get_parameter('ranging_freq').value
+        self.frame_id = self.get_parameter('frame_id').value
         self.sensor = None
+        self._ranging = False
+        self._rays = None
+        self._fields = [
+            PointField(name="x", offset=0, datatype=PointField.FLOAT32, count=1),
+            PointField(name="y", offset=4, datatype=PointField.FLOAT32, count=1),
+            PointField(name="z", offset=8, datatype=PointField.FLOAT32, count=1)]
 
         self.get_logger().info('Initialized')
+
+    def _build_rays(self):
+        """Per-zone x/y factors, computed once. Zone centres across the 45 degree FOV; pixel rows run
+        toward the sensor's left, so x is negated (right-handed frame, z along the boresight)."""
+        per_px = np.deg2rad(45) / self.res
+        angles = (np.arange(self.res) + 0.5)*per_px - np.deg2rad(45)/2
+        sin = np.sin(angles).astype(np.float32)/1000
+        self._rays = (-sin[:, None], sin[None, :])
 
     def read_sensor(self):
         """Read data from the ToF sensor and convert to point cloud data"""
@@ -64,9 +79,6 @@ class ToFImagerPublisher(Node):
                 self.get_logger().error(f"Failed to restart sensor: {restart_error}")
             return None
 
-        point_dim = 3  # x, y, z
-        point_size = point_dim*4  # bytes
-        
         try:
             data = self.sensor.get_ranging_data()
         except IndexError:
@@ -75,53 +87,36 @@ class ToFImagerPublisher(Node):
             self.get_logger().error(f"Error getting ranging data: {e}")
             return None
 
-        distance_mm = np.array(data.distance_mm[:(self.res*self.res)]).reshape(self.res,self.res)
-        buf = np.empty((self.res, self.res, point_dim), dtype=np.float32)
-        it = np.nditer(distance_mm, flags=["multi_index"])
-        per_px = np.deg2rad(45) / self.res
-        for e in it:
-            w, h = it.multi_index
-            e = 0 if e < 0 else e
-            # Zone centres across the 45 degree FOV. Pixel rows run toward the sensor's left, so x is negated to
-            # give a right-handed frame with z along the boresight (x right, y forward when facing up)
-            x = -e*np.sin((w + 0.5)*per_px - np.deg2rad(45)/2)/1000
-            y = e*np.sin((h + 0.5)*per_px - np.deg2rad(45)/2)/1000
-            z = e/1000
-            buf[w][h] = [x, y, z]
-        
-        return buf, point_size
+        distance_mm = np.asarray(data.distance_mm[:self.res*self.res], dtype=np.float32).reshape(self.res, self.res)
+        np.maximum(distance_mm, 0, out=distance_mm)
+        sx, sy = self._rays
+        buf = np.empty((self.res, self.res, 3), dtype=np.float32)
+        buf[..., 0] = distance_mm*sx
+        buf[..., 1] = distance_mm*sy
+        buf[..., 2] = distance_mm/1000
+        return buf
 
     def publish_pcl(self):
         """Populate and publish the ToF imager pointcloud"""
-        if self.pcl_pub is not None and self.pcl_pub.is_activated:
-            sensor_data = self.read_sensor()
-            if sensor_data is None:
-                return
-                
-            buf, point_size = sensor_data
-            pc_msg = PointCloud2(
-                header = Header(
-                    stamp = self.get_clock().now().to_msg(),
-                    frame_id = self.get_parameter('frame_id').value),
-                height = self.res,
-                width = self.res,
-                fields = [
-                    PointField(name="x", offset=0, datatype=PointField.FLOAT32, count=1),
-                    PointField(name="y", offset=4, datatype=PointField.FLOAT32, count=1),
-                    PointField(name="z", offset=8, datatype=PointField.FLOAT32, count=1)],
-                is_bigendian = False,
-                is_dense = False,
-                point_step = point_size,
-                row_step = point_size*self.res,
-                data = buf.tobytes()
-            )  
-            self.pcl_pub.publish(pc_msg)
+        # Nobody listening: leave the shared I2C bus alone (the sensor keeps ranging on its own)
+        if self.pcl_pub is None or not self.pcl_pub.is_activated or self.pcl_pub.get_subscription_count() == 0:
+            return
+        buf = self.read_sensor()
+        if buf is None:
+            return
+        self.pcl_pub.publish(PointCloud2(
+            header=Header(stamp=self.get_clock().now().to_msg(), frame_id=self.frame_id),
+            height=self.res,
+            width=self.res,
+            fields=self._fields,
+            is_bigendian=False,
+            is_dense=False,
+            point_step=12,
+            row_step=12*self.res,
+            data=buf.tobytes()))
 
     def on_configure(self, state: State) -> TransitionCallbackReturn:
         """Configure the ToF imager sensor"""
-        self.sensor = ToFImager()
-        self.sensor.init()
-
         if self.mode not in (1, 3):
             self.get_logger().info('Configuration Failure: Invalid sensor mode')
             return TransitionCallbackReturn.FAILURE
@@ -129,56 +124,83 @@ class ToFImagerPublisher(Node):
         if self.res not in (4, 8):
             self.get_logger().info('Configuration Failure: Invalid resolution')
             return TransitionCallbackReturn.FAILURE
-        
+
+        # Only distance is published: dropping the other outputs shrinks every frame's I2C read and parse
+        self.sensor = ToFImager(
+            disable_ambient_per_spad=True, disable_nb_spads_enabled=True, disable_nb_target_detected=True,
+            disable_signal_per_spad=True, disable_range_sigma_mm=True, disable_reflectance_percent=True,
+            disable_target_status=True, disable_motion_indicator=True)
+        self.sensor.init()
         self.sensor.set_resolution(self.res*self.res)
 
         # frequency needs to be set after setting the resolution
-        frequency = min(self.freq, 15) if self.res == 8 else min(self.freq, 60)
-        self.sensor.set_ranging_frequency_hz(frequency)
+        self.frequency = min(self.freq, 15) if self.res == 8 else min(self.freq, 60)
+        self.sensor.set_ranging_frequency_hz(self.frequency)
         self.sensor.set_ranging_mode(self.mode)
-        self.sensor.start_ranging()
-        
-        if self.sensor.is_alive():
-            self.get_logger().info('Configured: Inactive')
-            return TransitionCallbackReturn.SUCCESS
-        else:
+        self._build_rays()
+
+        if not self.sensor.is_alive():
             self.get_logger().info('Configuration Failure: Sensor not alive')
             return TransitionCallbackReturn.FAILURE
+        self.get_logger().info('Configured: Inactive')
+        return TransitionCallbackReturn.SUCCESS
 
     def on_activate(self, state: State) -> TransitionCallbackReturn:
-        """Activate the node (start timers and data acquisition)"""
+        """Start ranging and the polling timer"""
         try:
+            self.sensor.start_ranging()
+            self._ranging = True
             self.pcl_pub = self.create_lifecycle_publisher(PointCloud2, 'pointcloud', qos_profile=qos_profile_sensor_data)
-            self.timer = self.create_timer(self.get_parameter('timer_period').value, self.publish_pcl)
+            # Poll at least twice per frame: a timer equal to the frame period aliases and adds up to a frame of latency
+            period = min(self.get_parameter('timer_period').value, 0.5/self.frequency)
+            self.timer = self.create_timer(period, self.publish_pcl)
             self.get_logger().info("Activated")
         except Exception as e:
             self.get_logger().error(f"Activation failed: {e}")
+            return TransitionCallbackReturn.FAILURE
 
         return super().on_activate(state)
 
     def on_deactivate(self, state: State) -> TransitionCallbackReturn:
-        """Deactivate the node (stop timers and publishing)"""
-        
-        self.sensor.stop_ranging()
+        """Stop the timer and ranging (the sensor idles instead of drawing power)"""
         if self.timer is not None:
             self.timer.cancel()
             self.destroy_timer(self.timer)
+            self.timer = None
         if self.pcl_pub is not None:
             self.destroy_publisher(self.pcl_pub)
-            
+            self.pcl_pub = None
+        self._stop_ranging()
+
         self.get_logger().info("Deactivated")
         return super().on_deactivate(state)
 
+    def _stop_ranging(self):
+        if self._ranging:
+            self.sensor.stop_ranging()
+            self._ranging = False
+
+    def _close_sensor(self):
+        if self.sensor is not None:
+            try:
+                self._stop_ranging()
+                self.sensor._i2c_bus.close()
+            except Exception as e:
+                self.get_logger().warning(f"Sensor close failed: {e}")
+            self.sensor = None
+
     def on_cleanup(self, state: State) -> TransitionCallbackReturn:
-        """Clean up node resources"""
+        """Release the I2C bus"""
         self.get_logger().info("Cleaning up...")
+        self._close_sensor()
         return TransitionCallbackReturn.SUCCESS
 
     def on_shutdown(self, state: State) -> TransitionCallbackReturn:
         """Shutdown the node"""
         self.get_logger().info("Shutting down...")
+        self._close_sensor()
         return TransitionCallbackReturn.SUCCESS
-        
+
 
 def main(args=None):
     rclpy.init(args=args)
