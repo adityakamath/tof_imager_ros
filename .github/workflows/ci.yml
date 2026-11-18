@@ -58,6 +58,12 @@ jobs:
           . /opt/ros/${{ matrix.distro }}/setup.bash
           colcon build --event-handlers console_direct+
 
+      - name: Unit tests
+        run: |
+          . /opt/ros/${{ matrix.distro }}/setup.bash
+          . install/setup.bash
+          python3 -m pytest -q test/test_tof_imager_publisher.py
+
       # The sensor itself needs hardware, so check what a runner can: the node imports against this distro's
       # rclpy and the launch file builds its description.
       - name: Smoke test

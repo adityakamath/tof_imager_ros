@@ -55,6 +55,14 @@ More info about the mode and ranging frequency parameters can be found in the Da
 * Build the package and run the launch file: ```ros2 launch tof_imager_ros tof_imager.launch.py```. The launch file configures and activates the node, so ```ros2 lifecycle get /tof_imager``` should report ```active```.
 * If the node exits immediately, the log shows the cause: ```No module named 'vl53l5cx'``` means the library above is missing from the Python ROS uses, and ```Sensor not alive``` points to wiring or I2C.
 
+## Tests
+
+```
+python3 -m pytest test/test_tof_imager_publisher.py
+```
+
+The tests run the node against a fake sensor, so no hardware is needed. They check the point cloud against a per-pixel reference at 4x4 and 8x8, the sensor configuration, the lifecycle transitions and the publishing conditions. Run them from a shell where ROS and ```vl53l5cx``` are available (source your ROS installation first).
+
 ## Results
 
 This package was tested using both [VL53L5CX ToF Imager](https://www.sparkfun.com/products/18642) and [VL53L7CX](https://www.pololu.com/product/3418/resources) and a Raspberry Pi 4 (4GB) running ROS 2 Humble.
