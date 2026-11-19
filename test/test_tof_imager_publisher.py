@@ -313,3 +313,36 @@ class TestPublishing:
         n.publish_pcl()
         assert published == []
         n.destroy_node()
+
+
+class TestPacedWrites:
+    """Large sensor writes must be split into short I2C transactions."""
+
+    def test_write_is_split_into_contiguous_short_chunks(self, monkeypatch):
+        sent = []
+
+        class Msg:
+            @staticmethod
+            def write(address, data):
+                return (address, list(data))
+
+        class Bus:
+            @staticmethod
+            def i2c_rdwr(message):
+                sent.append(message)
+
+        monkeypatch.setattr(module.time, 'sleep', lambda seconds: None)
+        sensor = module.ToFImager.__new__(module.ToFImager)
+        sensor.i2c_address, sensor.i2c_msg, sensor._i2c_bus = 0x29, Msg, Bus
+        payload = [i % 251 for i in range(1000)]
+        sensor.wr_multi(0x10, payload, len(payload))
+
+        assert all(len(data) - 2 <= module.WRITE_CHUNK_BYTES for _, data in sent)
+        assert len(sent) == -(-len(payload) // module.WRITE_CHUNK_BYTES)
+        position = 0
+        for address, data in sent:
+            assert address == 0x29
+            assert (data[0] << 8 | data[1]) == 0x10 + position
+            assert data[2:] == payload[position:position + len(data) - 2]
+            position += len(data) - 2
+        assert position == len(payload)

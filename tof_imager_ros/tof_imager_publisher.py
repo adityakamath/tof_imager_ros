@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import sys
+import time
 import rclpy
 import numpy as np
 from typing import Optional
@@ -22,7 +23,25 @@ from rclpy.executors import ExternalShutdownException
 from rclpy.qos import qos_profile_sensor_data
 from std_msgs.msg import Header
 from sensor_msgs.msg import PointCloud2, PointField
-from vl53l5cx.vl53l5cx import VL53L5CX as ToFImager, VL53L5CXResultsData as ToFImagerResults
+from vl53l5cx.vl53l5cx import VL53L5CX, VL53L5CXResultsData as ToFImagerResults
+
+
+# Bytes per I2C write: the library's 4 KiB writes hold a 400 kHz bus for about 90 ms during the firmware upload
+WRITE_CHUNK_BYTES = 256
+WRITE_PAUSE_S = 0.001
+
+
+class ToFImager(VL53L5CX):
+    """VL53L5CX that sends large writes in small chunks so other devices can use the shared I2C bus."""
+
+    def wr_multi(self, addr, buffer, size):
+        """Write size bytes starting at register addr, one short transaction at a time."""
+        for position in range(0, size, WRITE_CHUNK_BYTES):
+            data = buffer[position:position + min(WRITE_CHUNK_BYTES, size - position)]
+            register = addr + position
+            self._i2c_bus.i2c_rdwr(self.i2c_msg.write(
+                self.i2c_address, [register >> 8 & 0xff, register & 0xff, *data]))
+            time.sleep(WRITE_PAUSE_S)
 
 class ToFImagerPublisher(Node):
     def __init__(self, node_name='tof_imager'):

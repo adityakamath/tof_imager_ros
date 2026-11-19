@@ -61,7 +61,7 @@ More info about the mode and ranging frequency parameters can be found in the Da
 python3 -m pytest test/test_tof_imager_publisher.py
 ```
 
-The tests run the node against a fake sensor, so no hardware is needed. They check the point cloud against a per-pixel reference at 4x4 and 8x8, the sensor configuration, the lifecycle transitions and the publishing conditions. Run them from a shell where ROS and ```vl53l5cx``` are available (source your ROS installation first).
+The tests run the node against a fake sensor, so no hardware is needed. They check the point cloud against a per-pixel reference at 4x4 and 8x8, the sensor configuration, the lifecycle transitions, the publishing conditions and the size of the I2C writes. Run them from a shell where ROS and ```vl53l5cx``` are available (source your ROS installation first).
 
 ## Results
 
